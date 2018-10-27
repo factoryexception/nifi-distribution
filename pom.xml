@@ -2,11 +2,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.factoryexception</groupId>
   <artifactId>nifi-distribution</artifactId>
-  <version>1.1.1-1</version>
+  <version>1.8.0-1</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <apache.nifi.version>1.1.1</apache.nifi.version>
+    <apache.nifi.version>1.8.0</apache.nifi.version>
     <download.maven.plugin.version>1.3.0</download.maven.plugin.version>
     <rpm.maven.plugin>2.1.5</rpm.maven.plugin>
     <download.uri>http://mirror.reverse.net/pub/apache/nifi/${apache.nifi.version}/nifi-${apache.nifi.version}-bin.zip</download.uri>
@@ -43,14 +43,14 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>rpm-maven-plugin</artifactId>
-        <version>${rpm.maven.plugin}</version>
+        <groupId>de.dentrassi.maven</groupId>
+        <artifactId>rpm</artifactId>
+        <version>1.1.0</version>
         <executions>
           <execution>
-            <id>generate-rpm</id>
+            <id>attach-rpm</id>
             <goals>
-              <goal>attached-rpm</goal>
+              <goal>rpm</goal>
             </goals>
           </execution>
         </executions>
@@ -58,41 +58,53 @@
           <license>${rpm.configuration.license}</license>
           <packager>${project.groupId}</packager>
           <group>${rpm.configuration.group}</group>
-          <name>${project.artifactId}</name>
           <needarch>noarch</needarch>
-          <targetOS>linux</targetOS>
-          <prefix>${rpm.prefix}</prefix>
-          <defaultDirmode>755</defaultDirmode>
-          <defaultFilemode>644</defaultFilemode>
-          <defaultUsername>${rpm.configuration.username}</defaultUsername>
-          <defaultGroupname>${rpm.configuration.username}</defaultGroupname>
+          <operatingSystem>linux</operatingSystem>
+          <skipSigning>true</skipSigning>
           <requires>
             <require>java</require>
           </requires>
-          <mappings>
-            <mapping>
-              <directory>${rpm.configuration.prefix}/${nifi.distribution.directory}</directory>
-              <sources>
-                <softlinkSource>
-                  <location>${rpm.configuration.prefix}/${nifi.version.directory}</location>
-                </softlinkSource>
-              </sources>
-            </mapping>
-            <mapping>
-              <directory>${rpm.configuration.prefix}/${nifi.version.directory}</directory>
-              <sources>
-                <source>
-                  <location>${project.build.directory}/${nifi.version.directory}</location>
-                </source>
-              </sources>
-            </mapping>
-            <mapping>
-              <directory>${rpm.configuration.prefix}/${nifi.version.directory}/lib</directory>
-              <filemode>775</filemode>
-              <username>${rpm.configuration.username}</username>
-              <groupname>${rpm.configuration.groupname}</groupname>
-            </mapping>
-          </mappings>
+          <prefixes>
+            <prefix>${rpm.prefix}</prefix>
+          </prefixes>
+          <rulesets>
+            <ruleset>
+              <defaultRuleset>true</defaultRuleset>
+              <id>default</id>
+              <rules>
+                <rule>
+                  <when>
+                    <type>directory</type>
+                  </when>
+                  <mode>0755</mode>
+                  <user>${rpm.configuration.username}</user>
+                  <group>${rpm.configuration.username}</group>
+                </rule>
+                <rule>
+                  <when>
+                    <type>directory</type>
+                    <suffix>lib</suffix>
+                  </when>
+                  <mode>0775</mode>
+                  <user>${rpm.configuration.username}</user>
+                  <group>${rpm.configuration.groupname}</group>
+                </rule>
+              </rules>
+            </ruleset>
+          </rulesets>
+          <entries>
+            <entry>
+              <name>${rpm.configuration.prefix}/${nifi.distribution.directory}</name>
+              <linkTo>${rpm.configuration.prefix}/${nifi.version.directory}</linkTo>
+            </entry>
+            <entry>
+              <name>${rpm.configuration.prefix}/${nifi.version.directory}</name>
+              <collect>
+                <from>${project.build.directory}/${nifi.version.directory}</from>
+                <directories>true</directories>
+              </collect>
+            </entry>
+          </entries>
         </configuration>
       </plugin>
     </plugins>
